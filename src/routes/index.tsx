@@ -1,13 +1,16 @@
 import { $, component$, useSignal } from "@builder.io/qwik";
-import type { DocumentHead } from "@builder.io/qwik-city";
+import { type DocumentHead, useNavigate } from "@builder.io/qwik-city";
 import { PokemonImage } from "../components/pokemons/pokemon-image";
 
 export default component$(() => {
   const pokemonId = useSignal<number>(1); // useSignal - Se usa principalmente con tipos primitivos
   // const pokemonId2 = useStore(); // useStore - Se usa principalmente con estructuras de datos, arrays objetos, etc.
 
-  const voltear = useSignal<boolean>(false);
+  const voltear = useSignal<boolean>(true);
   const revelar = useSignal<boolean>(true);
+
+  /* Permite vaegar a una pagina especifica */
+  const nav = useNavigate();
 
   const changePokemonId = $((value: number) => {
     if (pokemonId.value + value <= 0) return;
@@ -23,12 +26,23 @@ export default component$(() => {
     revelar.value = !revelar.value;
   });
 
+  const goToPokemon = $(async () => {
+    await nav(`/pokemon/${pokemonId.value}`);
+  });
+
   return (
     <>
       <span class="text-2xl">Buscador simple</span>
       <span class="text-9xl">{pokemonId.value}</span>
 
-      <PokemonImage id={pokemonId.value} backImage={voltear.value} isVisible={revelar.value}  />
+      {/* <Link href={`/pokemon/${pokemonId.value}/`}>
+        <PokemonImage id={pokemonId.value} backImage={voltear.value} isVisible={revelar.value}  />
+      </Link> */}
+
+      <div onClick$={() => goToPokemon()} style={"cursor: pointer"}>
+        <PokemonImage id={pokemonId.value} backImage={voltear.value} isVisible={revelar.value} />
+      </div>
+
 
       <div class="mt-2">
         <button

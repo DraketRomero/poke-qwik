@@ -1,4 +1,5 @@
 import { component$, Slot, useStyles$ } from "@builder.io/qwik";
+// import { component$, Slot } from "@builder.io/qwik";
 
 import Navbar from "~/components/shared/navbar/navbar";
 
