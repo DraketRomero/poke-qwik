@@ -1,48 +1,43 @@
-import { $, component$, useSignal } from "@builder.io/qwik";
+import { $, component$, useContext } from "@builder.io/qwik";
 import { type DocumentHead, useNavigate } from "@builder.io/qwik-city";
 import { PokemonImage } from "../components/pokemons/pokemon-image";
+import { PokemonGameContext } from "~/context";
 
 export default component$(() => {
-  const pokemonId = useSignal<number>(1); // useSignal - Se usa principalmente con tipos primitivos
-  // const pokemonId2 = useStore(); // useStore - Se usa principalmente con estructuras de datos, arrays objetos, etc.
-
-  const voltear = useSignal<boolean>(true);
-  const revelar = useSignal<boolean>(true);
-
-  /* Permite vaegar a una pagina especifica */
   const nav = useNavigate();
 
-  const changePokemonId = $((value: number) => {
-    if (pokemonId.value + value <= 0) return;
+  const pokemonGame = useContext(PokemonGameContext);
 
-    pokemonId.value += value;
+  const changePokemonId = $((value: number) => {
+    if (pokemonGame.pokemonId + value <= 0) return;
+
+    pokemonGame.pokemonId += value;
   });
 
   const changeViewPokemon = $(() => {
-    voltear.value = !voltear.value;
+    pokemonGame.voltear = !pokemonGame.voltear;
   });
 
   const revelarPokemon = $(() => {
-    revelar.value = !revelar.value;
+    pokemonGame.revelar = !pokemonGame.revelar;
   });
 
   const goToPokemon = $(async () => {
-    await nav(`/pokemon/${pokemonId.value}`);
+    await nav(`/pokemon/${pokemonGame.pokemonId}`);
   });
 
   return (
     <>
       <span class="text-2xl">Buscador simple</span>
-      <span class="text-9xl">{pokemonId.value}</span>
-
-      {/* <Link href={`/pokemon/${pokemonId.value}/`}>
-        <PokemonImage id={pokemonId.value} backImage={voltear.value} isVisible={revelar.value}  />
-      </Link> */}
+      <span class="text-9xl">{pokemonGame.pokemonId}</span>
 
       <div onClick$={() => goToPokemon()} style={"cursor: pointer"}>
-        <PokemonImage id={pokemonId.value} backImage={voltear.value} isVisible={revelar.value} />
+        <PokemonImage
+          id={pokemonGame.pokemonId}
+          backImage={pokemonGame.voltear}
+          isVisible={pokemonGame.revelar}
+        />
       </div>
-
 
       <div class="mt-2">
         <button
@@ -51,7 +46,10 @@ export default component$(() => {
         >
           Anterior
         </button>
-        <button class="btn btn-primary mr-2" onClick$={() => changePokemonId(+1)}>
+        <button
+          class="btn btn-primary mr-2"
+          onClick$={() => changePokemonId(+1)}
+        >
           Siguiente
         </button>
         <button class="btn btn-primary mr-2" onClick$={changeViewPokemon}>
