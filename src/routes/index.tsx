@@ -1,61 +1,55 @@
-import { $, component$, useContext } from "@builder.io/qwik";
+import { $, component$ } from "@builder.io/qwik";
 import { type DocumentHead, useNavigate } from "@builder.io/qwik-city";
 import { PokemonImage } from "../components/pokemons/pokemon-image";
-import { PokemonGameContext } from "~/context";
+import { usePokemonGame } from "~/hooks/usePokemonGame";
 
 export default component$(() => {
   const nav = useNavigate();
 
-  const pokemonGame = useContext(PokemonGameContext);
+  const {
+    pokemonId,
+    isPokemonVisible,
+    showBackImage,
+    nextPokemon,
+    previousPokemon,
+    toogleFromBack,
+    toogleVisible
+  } = usePokemonGame();
 
-  const changePokemonId = $((value: number) => {
-    if (pokemonGame.pokemonId + value <= 0) return;
-
-    pokemonGame.pokemonId += value;
-  });
-
-  const changeViewPokemon = $(() => {
-    pokemonGame.voltear = !pokemonGame.voltear;
-  });
-
-  const revelarPokemon = $(() => {
-    pokemonGame.revelar = !pokemonGame.revelar;
-  });
-
-  const goToPokemon = $(async () => {
-    await nav(`/pokemon/${pokemonGame.pokemonId}`);
+  const goToPokemon = $(( id: number ) => {
+    nav(`/pokemon/${ id }/`);
   });
 
   return (
     <>
       <span class="text-2xl">Buscador simple</span>
-      <span class="text-9xl">{pokemonGame.pokemonId}</span>
+      <span class="text-9xl">{ pokemonId }</span>
 
-      <div onClick$={() => goToPokemon()} style={"cursor: pointer"}>
+      <div onClick$={() => goToPokemon( pokemonId.value )} style={"cursor: pointer"}>
         <PokemonImage
-          id={pokemonGame.pokemonId}
-          backImage={pokemonGame.voltear}
-          isVisible={pokemonGame.revelar}
+          id={ pokemonId.value }
+          backImage={ showBackImage.value }
+          isVisible={ isPokemonVisible.value }
         />
       </div>
 
       <div class="mt-2">
         <button
           class="btn btn-primary mr-2"
-          onClick$={() => changePokemonId(-1)}
+          onClick$={ previousPokemon }
         >
           Anterior
         </button>
         <button
           class="btn btn-primary mr-2"
-          onClick$={() => changePokemonId(+1)}
+          onClick$={ nextPokemon }
         >
           Siguiente
         </button>
-        <button class="btn btn-primary mr-2" onClick$={changeViewPokemon}>
+        <button class="btn btn-primary mr-2" onClick$={ toogleFromBack }>
           Voltear
         </button>
-        <button class="btn btn-primary" onClick$={revelarPokemon}>
+        <button class="btn btn-primary" onClick$={ toogleVisible }>
           Revelar
         </button>
       </div>
@@ -72,3 +66,4 @@ export const head: DocumentHead = {
     },
   ],
 };
+
