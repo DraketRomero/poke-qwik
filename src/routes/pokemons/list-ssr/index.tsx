@@ -1,14 +1,16 @@
-import { component$, useComputed$ } from "@builder.io/qwik";
+import { $, component$, useComputed$, useSignal, useStore, useVisibleTask$ } from "@builder.io/qwik";
 import { Link, type DocumentHead, routeLoader$, useLocation } from "@builder.io/qwik-city";
 import { PokemonImage } from "~/components/pokemons/pokemon-image";
+import { Modal } from "~/components/shared";
 import { getSmallPokemons } from "~/helpers/get-small-pokemons";
+import { getFunFactAboutPokemon } from "~/helpers/getChatGPT-response";
 import type { SmallPokemon } from "~/interfaces";
 
 export const usePokemonList = routeLoader$<SmallPokemon[]>(async ({ query, redirect, pathname }) => {
   const offset = Number(query.get('offset') || 0);
 
-  if(isNaN(offset)) redirect(301, pathname);
-  if(offset < 0 ) redirect(301, pathname);
+  if (isNaN(offset)) redirect(301, pathname);
+  if (offset < 0) redirect(301, pathname);
 
   return getSmallPokemons(offset);
 
@@ -24,6 +26,33 @@ export default component$(() => {
   const pokemons = usePokemonList();
   const location = useLocation();
 
+  const modalVisible = useSignal(false);
+  const modalPokemon = useStore({
+    id: '',
+    name: ''
+  });
+
+  const chatGPTPokemonFact = useSignal('');
+
+  // Modal functions
+  const showModal = $((id: string, name: string) => {
+    modalPokemon.id = id;
+    modalPokemon.name = name;
+    modalVisible.value = true;
+  });
+
+  const closeModal = $(() => {
+    modalVisible.value = false;
+  });
+
+  useVisibleTask$(({ track }) => {
+    track( () => modalPokemon.name );
+
+    chatGPTPokemonFact.value = '';
+
+    modalPokemon.name.length > 0 && getFunFactAboutPokemon( modalPokemon.name ).then( resp => chatGPTPokemonFact.value = resp );
+  });
+
   // console.log(location.url.searchParams.get('offset'));
 
   const currentOffset = useComputed$<number>(() => {
@@ -38,7 +67,7 @@ export default component$(() => {
       <div class="flex flex-col">
         <span class="my-5 text-5xl">Status</span>
         <span>Offset: {currentOffset}</span>
-        <span>Está cargando página: { location.isNavigating ? 'Si' : 'No'}</span>
+        <span>Está cargando página: {location.isNavigating ? 'Si' : 'No'}</span>
       </div>
 
       <div class="mt-10">
@@ -51,12 +80,33 @@ export default component$(() => {
 
       <div class="grid grid-cols-6 mt-5">
         {pokemons.value.map(({ id, name }) => (
-          <div key={name} class="m-5 flex flex-col justify-center items-center">
+          <div key={name}
+            onClick$={() => showModal(id, name)}
+            class="m-5 flex flex-col justify-center items-center">
             <PokemonImage id={id} />
             <span class="capitalize">{name}</span>
           </div>
         ))}
       </div>
+
+      <Modal
+        persistent
+        // size="lg"
+        showModal={modalVisible.value} closeFn={closeModal}>
+        {/* q:slot - Le indica a la etiqueta HTML que se comporte como un namedSlot, es decir, como un componente hijo del HOC */}
+        <div q:slot="title">{modalPokemon.name}</div>
+
+        <div q:slot="content" class="flex flex-col justify-center items-center">
+          <PokemonImage id={modalPokemon.id} />
+          <span>
+            { 
+              chatGPTPokemonFact.value === '' 
+              ? 'Preguntandole a ChatGPT' 
+              : chatGPTPokemonFact.value
+            }
+          </span>
+        </div>
+      </Modal>
     </>
   );
 });
